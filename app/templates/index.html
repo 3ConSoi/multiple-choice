@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Online</title>
+    <style>
+        body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; }
+        .hidden { display: none; }
+        .answer { margin: 8px 0; padding: 8px; border: 1px solid #ddd; cursor: pointer; }
+        .answer.selected { background: #d0ebff; border-color: #74c0fc; }
+        #timer { font-size: 20px; font-weight: bold; color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Bài thi trắc nghiệm</h2>
+<div id="timer"></div>
+
+<!-- Nút bắt đầu -->
+<button id="start-btn" onclick="startQuiz()">BẮT ĐẦU</button>
+
+<!-- Khu vực câu hỏi -->
+<div id="quiz-area" class="hidden">
+    <h3 id="counter"></h3>
+    <h2 id="question-text"></h2>
+    <div id="answers"></div>
+
+    <button onclick="prevQuestion()">⬅ Quay lại</button>
+    <button onclick="nextQuestion()">Tiếp ➡</button>
+    <button onclick="submitQuiz()" style="float:right;background:green;color:white;">Nộp bài</button>
+</div>
+
+<script>
+let questions = [];
+let currentIndex = 0;
+let selectedAnswers = {}; 
+let timeLeft = 20 * 60; // 20 phút
+
+// ----------------------------
+// BẮT ĐẦU
+// ----------------------------
+function startQuiz() {
+    document.getElementById("start-btn").classList.add("hidden");
+    loadQuestions();
+    startTimer();
+}
+
+// ----------------------------
+// ĐỒNG HỒ ĐẾM NGƯỢC
+// ----------------------------
+function startTimer() {
+    setInterval(() => {
+        timeLeft--;
+        let m = Math.floor(timeLeft / 60);
+        let s = timeLeft % 60;
+        document.getElementById("timer").innerText = `⏰ ${m}:${s < 10 ? '0'+s : s}`;
+
+        if (timeLeft <= 0) submitQuiz();
+    }, 1000);
+}
+
+// ----------------------------
+// LẤY 20 CÂU RANDOM TỪ API
+// ----------------------------
+async function loadQuestions() {
+    let res = await fetch("/quiz/random");
+    questions = await res.json();
+    questions = questions.map(q => {
+        return {
+            ...q,
+            choices: (typeof q.choices === "string") ? JSON.parse(q.choices) : q.choices,
+            answer_key: (typeof q.answer_key === "string") ? JSON.parse(q.answer_key) : q.answer_key
+        };
+    });
+    document.getElementById("quiz-area").classList.remove("hidden");
+    showQuestion();
+}
+
+// ----------------------------
+// HIỂN THỊ CÂU HỎI
+// ----------------------------
+function showQuestion() {
+    let q = questions[currentIndex];
+
+    document.getElementById("counter").innerText =
+        `Câu ${currentIndex + 1} / ${questions.length}`;
+
+    document.getElementById("question-text").innerText = q.text;
+
+    let answersDiv = document.getElementById("answers");
+    answersDiv.innerHTML = "";
+
+    q.choices.forEach(ch => {
+        let div = document.createElement("div");
+        div.className = "answer";
+        div.innerText = `${ch.id}. ${ch.label}`;
+        
+        if (selectedAnswers[currentIndex] === ch.id) {
+            div.classList.add("selected");
+        }
+
+        div.onclick = () => {
+            selectedAnswers[currentIndex] = ch.id;
+            showQuestion();
+        };
+
+        answersDiv.appendChild(div);
+    });
+}
+
+// ----------------------------
+// TIẾP + QUAY LẠI
+// ----------------------------
+function nextQuestion() {
+    if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        showQuestion();
+    }
+}
+
+function prevQuestion() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion();
+    }
+}
+
+// ----------------------------
+// NỘP BÀI
+// ----------------------------
+function submitQuiz() {
+    document.getElementById("quiz-area").innerHTML = "";
+
+    let score = 0;
+    let resultHTML = "<h2>📊 Kết quả bài thi</h2>";
+
+    questions.forEach((q, idx) => {
+        let userAnswer = selectedAnswers[idx];
+        let correctAnswer = q.answer_key[0];
+
+        let isCorrect = userAnswer === correctAnswer;
+        if (isCorrect) score++;
+
+        resultHTML += `
+            <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+                <b>Câu ${idx + 1}:</b> ${q.text}<br>
+                <b>Bạn chọn:</b> 
+                <span style="color:${isCorrect ? 'green' : 'red'}">
+                    ${userAnswer ?? "Chưa chọn"}
+                </span><br>
+                <b>Đáp án đúng:</b> 
+                <span style="color:green">${q.choices.find(c => c.id === correctAnswer).label}</span>
+            </div>
+        `;
+    });
+
+    resultHTML = `
+        <h2>🎉 Bạn được ${score} / ${questions.length} điểm</h2>
+    ` + resultHTML;
+
+    document.body.innerHTML = resultHTML;
+}
+</script>
+
+</body>
+</html>
