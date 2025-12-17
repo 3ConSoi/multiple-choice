@@ -15,6 +15,14 @@ def create_question(db: Session, q):
     db.add(obj); db.commit(); db.refresh(obj)
     return obj
 
+@router.post("/seed")
+def seed_questions(db: Session = Depends(get_db)):
+    with open("seed_questions.sql", "r", encoding="utf-8") as f:
+        sql = f.read()
+    db.execute(text(sql))
+    db.commit()
+    return {"message": "Seed questions successfully"}
+
 def get_questions(db: Session, category_id=None, difficulty=None):
     q = db.query(models.Question)
     if category_id:
