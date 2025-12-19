@@ -33,7 +33,6 @@ function startQuiz() {
 
 function loadQuiz() {
     fetch(`${API_BASE}/quiz/all`)
-
         .then(res => res.json())
         .then(data => {
             let html = "<h2>Danh sách câu hỏi</h2>";
