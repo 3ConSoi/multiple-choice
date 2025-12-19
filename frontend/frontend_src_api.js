@@ -1,4 +1,8 @@
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
+const API_BASE = "https://multiple-choice-qcf5.onrender.com";
+
+fetch(`${API_BASE}/questions`)
+  .then(res => res.json())
+  .then(data => console.log(data));
 
 export async function startExam(examId, { num_questions, randomize } = {}) {
   const params = new URLSearchParams();
@@ -28,7 +32,8 @@ function startQuiz() {
 
 
 function loadQuiz() {
-    fetch("http://127.0.0.1:8000/quiz/all")
+    fetch(`${API_BASE}/quiz/all`)
+
         .then(res => res.json())
         .then(data => {
             let html = "<h2>Danh sách câu hỏi</h2>";
