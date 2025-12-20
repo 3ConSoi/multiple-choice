@@ -1,72 +1,57 @@
 const API_BASE = "https://multiple-choice-qcf5.onrender.com";
 
-fetch(`${API_BASE}/questions`)
-  .then(res => res.json())
-  .then(data => console.log(data));
+let questions = [];
+let currentIndex = 0;
 
-export async function startExam(examId, { num_questions, randomize } = {}) {
-  const params = new URLSearchParams();
-  if (num_questions) params.set("num_questions", num_questions);
-  if (randomize !== undefined) params.set("randomize", randomize);
-  const res = await fetch(`${API_BASE}/exams/${examId}/start?${params.toString()}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" }
-  });
-  return res.json();
-}
+/* ================= LOAD QUESTIONS ================= */
+async function loadQuestions() {
+  try {
+    const res = await fetch(`${API_BASE}/api/random`);
+    questions = await res.json();
 
-export async function submitAttempt(attemptId, answers) {
-  const res = await fetch(`${API_BASE}/attempts/submit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ attempt_id: attemptId, answers })
-  });
-  return res.json();
-}
-
-function startQuiz() {
-    document.getElementById("start-btn").style.display = "none";
-    loadQuestions();
-    startTimer();
-}
-
-
-function loadQuiz() {
-    fetch(`${API_BASE}/quiz/all`)
-        .then(res => res.json())
-        .then(data => {
-            let html = "<h2>Danh sách câu hỏi</h2>";
-            data.forEach(q => {
-                html += `
-                    <div style="margin-bottom:10px; border-bottom:1px solid #ccc;">
-                        <b>ID:</b> ${q.id}<br>
-                        <b>Câu hỏi:</b> ${q.question}<br>
-                        <b>A:</b> ${q.option1}<br>
-                        <b>B:</b> ${q.option2}<br>
-                        <b>C:</b> ${q.option3}<br>
-                        <b>D:</b> ${q.option4}<br>
-                        <b>Đáp án:</b> ${q.answer}
-                    </div>
-                `;
-            });
-
-            document.getElementById("quiz-list").innerHTML = html;
-        });
-}
-
-function submitQuiz() {
-    let score = 0;
-
-    answers.forEach((ans, idx) => {
-        if (ans === questions[idx].answer_key[0]) score++;
-    });
-
-    alert("Bạn được: " + score + "/20");
-}
-
-function nextQuestion() {
-    if (currentIndex < questions.length - 1) {
-        currentIndex++;
-        showQuestion();
+    if (!questions || questions.length === 0) {
+      alert("Không có câu hỏi trong database");
+      return;
     }
+
+    showQuestion();
+  } catch (err) {
+    console.error("Lỗi load câu hỏi:", err);
+  }
+}
+
+/* ================= SHOW QUESTION ================= */
+function showQuestion() {
+  const q = questions[currentIndex];
+  const quizDiv = document.getElementById("quiz");
+
+  quizDiv.innerHTML = `
+    <h3>Câu ${currentIndex + 1}/${questions.length}</h3>
+    <p>${q.question}</p>
+
+    <label><input type="radio" name="answer" value="A"> ${q.option1}</label><br>
+    <label><input type="radio" name="answer" value="B"> ${q.option2}</label><br>
+    <label><input type="radio" name="answer" value="C"> ${q.option3}</label><br>
+    <label><input type="radio" name="answer" value="D"> ${q.option4}</label><br>
+
+    <br>
+    <button onclick="nextQuestion()">Câu tiếp theo</button>
+  `;
+}
+
+/* ================= NEXT ================= */
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex < questions.length) {
+    showQuestion();
+  } else {
+    document.getElementById("quiz").innerHTML =
+      "<h2>🎉 Hoàn thành bài thi!</h2>";
+  }
+}
+
+/* ================= START ================= */
+function startQuiz() {
+  document.getElementById("start-btn").style.display = "none";
+  loadQuestions();
 }
