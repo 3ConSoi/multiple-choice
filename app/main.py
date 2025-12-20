@@ -8,7 +8,7 @@ from app.session import init_db
 
 app = FastAPI(title="Multiple-choice Quiz")
 
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="app/frontend")
 
 # Init database
 @app.on_event("startup")
@@ -21,5 +21,4 @@ def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 # Include API routers
-app.include_router(quiz_router, prefix="/api")
 app.include_router(quiz_router, prefix="/quiz")
