@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.routes import router as api_router
 from app.routes.quiz_route import router as quiz_router
 from app.session import init_db
 
