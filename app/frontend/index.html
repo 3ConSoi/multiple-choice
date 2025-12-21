@@ -142,15 +142,18 @@ function submitQuiz() {
         let isCorrect = userAnswer === correctAnswer;
         if (isCorrect) score++;
 
+        const userChoice = q.choices.find(c => c.id === userAnswer);
+        const correctChoice = q.choices.find(c => c.id === correctAnswer);
+        
         resultHTML += `
             <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
                 <b>Câu ${idx + 1}:</b> ${q.text}<br>
                 <b>Bạn chọn:</b> 
                 <span style="color:${isCorrect ? 'green' : 'red'}">
-                    ${userAnswer ?? "Chưa chọn"}
-                </span><br>
+                    ${userChoice ? `${userChoice.id}: ${userChoice.label}` : "Chưa chọn"}                </span><br>
                 <b>Đáp án đúng:</b> 
-                <span style="color:green">${q.choices.find(c => c.id === correctAnswer).label}</span>
+                <span style="color:green">${correctChoice.id}: ${correctChoice.label}
+
             </div>
         `;
     });
